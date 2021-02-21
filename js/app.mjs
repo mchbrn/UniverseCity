@@ -13,8 +13,22 @@ function getData(callback) {
         var index = [0, 5, 8, 7, 4, 3, 6, 1, 2]
         var unsorted_bodies = new Array();
         var bodies = new Array();
-        
-        unsorted_bodies.push(data.bodies[0]);
+
+        var sun = data.bodies[0];
+
+        delete sun["alternativeName"];
+        delete sun["aroundPlanet"];
+        delete sun["dimension"];
+        delete sun["discoveredBy"];
+        delete sun["discoveryDate"];
+        delete sun["id"];
+        delete sun["isPlanet"];
+        delete sun["moons"];
+        delete sun["name"];
+        delete sun["rel"];
+        delete sun["vol"];
+
+        unsorted_bodies.push(sun);
         
         // Get planetary data
         $.getJSON("https://api.le-systeme-solaire.net/rest/bodies/", "filter[]=isPlanet,neq,false", function(data) {
@@ -49,7 +63,7 @@ function getData(callback) {
 
             // Sort bodies according to index
             bodies = index.map(i => unsorted_bodies[i]);
-            
+
             callback(bodies)
         }); 
     });
@@ -100,7 +114,7 @@ function initialiseScene(bodies) {
         renderer.render(scene, camera);
     }
     
-    animate();
+    //animate();
 
     makeButtons(bodies, meshes);
 }
@@ -163,7 +177,7 @@ function modelBodies(bodies) {
         body.name_formatted = name_formatted;
         meshes.push(body);
     }
-    console.log(meshes);
+
     return meshes;
 }
 
@@ -192,7 +206,6 @@ function getMajorRadii(meshes) {
 function getInitPositions(majorRadii) {
     var initPositions = new Array();
     var coordinates;
-    console.log(initPositions);
 
     // Only get positions for planets so loop against majorRadii [8]
     for (let i = 0; i < majorRadii.length; i++) {
@@ -349,12 +362,7 @@ function updatePositions(positions, majorRadii, meshes)
                 }
             }
         }
-        /*
-        if (i == 0)
-        {
-            console.log({xCoord, zCoord});
-        }                
-        */
+        
         coordinates = {xCoord, zCoord};
         positions[i] = coordinates;
     }
@@ -432,7 +440,7 @@ function showTable(body) {
 
     var table = document.querySelector("table");
     var keys = Object.keys(body);
-    
+
     // Clear previous table
     table.innerHTML = "";   
 
@@ -444,6 +452,10 @@ function showTable(body) {
                 units = "";
                 break;
             case "moons":
+                if (body.moons == null)
+                {
+                    break;
+                }
                 propertyName = "Moons";
                 propertyValue = body.moons;
                 units = "";
@@ -480,6 +492,10 @@ function showTable(body) {
                 units = " kg";
                 break;
             case "vol":
+                if (body.vol == null)
+                {
+                    break;
+                }
                 propertyName = "Volume";
                 propertyValue = body.vol.volValue;
                 propertyExponent = body.vol.volExponent;
@@ -533,6 +549,11 @@ function showTable(body) {
                 propertyValue = body.sideralRotation;
                 units = " h";
                 break;
+            case "axialTilt":
+                propertyName = "Axial tilt";
+                propertyValue = body.axialTilt;
+                units = "&deg;";
+                break;
             case "discoveredBy":
                 propertyName = "Discoverer";
                 propertyValue = body.discoveredBy;
@@ -566,7 +587,7 @@ function showTable(body) {
             td.appendChild(sup);
             td.appendChild(unit);
         }
-        else if (property == "inclination") {
+        else if (property == "inclination" || property == "axialTilt") {
             var td = document.createElement("td");
             var degrees = document.createElement("span");
             var value = document.createTextNode(propertyValue);
