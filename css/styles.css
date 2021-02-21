@@ -1,5 +1,23 @@
+@font-face {
+    font-family: "major-mono-display";
+    src: url("../fonts/MajorMonoDisplay-Regular.ttf");
+}
+
+@font-face {
+    font-family: "cutive-mono";
+    src: url("../fonts/CutiveMono-Regular.ttf");
+}
+
 body {
     margin:0;
+}
+
+button {
+    border-radius: 1em;
+    font-family: "major-mono-display";
+    margin: 0.5em;
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
 }
 
 canvas {
@@ -14,6 +32,8 @@ th {
 }
 
 #menu {
+    overflow-x: hidden;
+    overflow-y: auto;
     position: absolute;
     margin-top: 1vh;
     margin-left: 1vw;
@@ -21,16 +41,83 @@ th {
 	width: 100%;
 	text-align: center;
 	z-index: 100;
-    display:block;
-    
+    display: block;
     border-radius: 0.5em;
-    background: rgba(0, 2, 37, 0.6);/*#000225;*/
+    background: rgba(0, 2, 37, 0.6);
     padding: 0.1em; 
     width: 17vw;
     height: 97vh;
-    color:#ffffff;  
+    color: #ffffff;  
 }
 
-#planetButtons {
+#buttons {
+    margin-top: 2em;
+    margin-bottom: 2em;
     width: 100%;
+}
+
+#title {
+    font-family: "cutive-mono";
+}
+
+#data {
+    font-family: "cutive-mono";
+    width: 16vw;
+}
+
+#Sun {
+    background-color: #ff0000;
+    border: #ff0000;
+    padding-left: 2em;
+    padding-right: 2em;
+}
+
+#Mercury {
+    background-color: #a6a6a6;
+    border: #a6a6a6;
+}
+
+#Venus {
+    background-color: #fff7cc;
+    border: #fff7cc;
+    padding-left: 1.25em;
+    padding-right: 1.25em;
+}
+
+#Earth {
+    background-color: #66b8ff;
+    border: #fff7cc;
+    padding-left: 1.25em;
+    padding-right: 1.25em;
+}
+
+#Mars {
+    background-color: #d74b22;
+    border: #d74b22;
+    padding-left: 1.6em;
+    padding-right: 1.6em;
+}
+
+#Jupiter {
+    background-color: #f3ddb6;
+    border: #d74b22;
+}
+
+#Saturn {
+    background-color: #eebf95;
+    border: #d74b22;
+    padding-left: 0.85em;
+    padding-right: 0.85em;
+}
+
+#Uranus {
+    background-color: #d4f2f2;
+    border: #d4f2f2;
+    padding-left: 0.85em;
+    padding-right: 0.85em;
+}
+
+#Neptune {
+    background-color: #86c5da;
+    border: #86c5da;
 }

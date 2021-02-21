@@ -76,9 +76,8 @@ function initialiseScene(bodies) {
     // Add renderer element to document
     document.body.appendChild(renderer.domElement);
 
+    // Instantiate Orbit Controls
     const controls = new OrbitControls(camera, renderer.domElement);
-
-    // drawAxes();
 
     // Create meshes and set initial positions
     var meshes = modelBodies(bodies);
@@ -103,9 +102,7 @@ function initialiseScene(bodies) {
     
     animate();
 
-    drawAxes(scene);
-    
-    makeButtons(bodies);
+    makeButtons(bodies, meshes);
 }
 
 function getDataCallback(bodies) {
@@ -117,35 +114,45 @@ getData(getDataCallback);
 function modelBodies(bodies) {
     var meshes = new Array();
     var radius;
+    var name_formatted;
     
     for (let i = 0; i < bodies.length; i++) {
         switch(bodies[i].englishName) {
             case "Sun":
                 radius = 160.0;
+                name_formatted = "sun";
                 break;
             case "Mercury":
                 radius = 4.0;
+                name_formatted = "MeRcury";
                 break;
             case "Venus":
                 radius = 7.0;
+                name_formatted = "Venus";
                 break;
             case "Earth":
                 radius = 8.0;
+                name_formatted = "eARtH";
                 break;
             case "Mars":
                 radius = 5.0;
+                name_formatted = "MARs";
                 break;
             case "Jupiter":
                 radius = 32.0;
+                name_formatted = "jupiteR";
                 break;
             case "Saturn":
                 radius = 28.0;
+                name_formatted = "sAtuRn";
                 break;
             case "Uranus":
                 radius = 20.0;
+                name_formatted = "uRAnus";
                 break;
             case "Neptune":
                 radius = 19.0;
+                name_formatted = "neptune";
                 break;
         }
         
@@ -153,16 +160,17 @@ function modelBodies(bodies) {
         var bodyMat = new THREE.MeshBasicMaterial({color: materials[i]});
         var body = new THREE.Mesh(bodyGeo, bodyMat);
         body.name = bodies[i].englishName;
+        body.name_formatted = name_formatted;
         meshes.push(body);
     }
-
+    console.log(meshes);
     return meshes;
 }
 
 function setInitPositions(meshes) {
     var majorRadii = new Array();
     majorRadii = getMajorRadii(meshes);
-    var initPositions = getInitPositions(meshes, majorRadii);
+    var initPositions = getInitPositions(majorRadii);
     return initPositions;
 }
 
@@ -181,27 +189,32 @@ function getMajorRadii(meshes) {
     return majorRadii;
 }
 
-function getInitPositions(meshes, majorRadii) {
+function getInitPositions(majorRadii) {
     var initPositions = new Array();
+    var coordinates;
+    console.log(initPositions);
 
     // Only get positions for planets so loop against majorRadii [8]
     for (let i = 0; i < majorRadii.length; i++) {
+        var isNegative;
+        var xCoord;
+        var zCoord;
+        
         // Get random x value and use to find z
         // -major radius <= x <= major radius
-        var isNegative;
-        var xCoord = (Math.random() * majorRadii[i]) + 1;
-        var zCoord;
-
-        // Returns either 1 or 0
-        isNegative = Math.floor((Math.random() * 2)) == 1 ? true : false;
-        // If Math.random() == 1
-        // Multiply xCoord by 1
+        xCoord = Math.floor((Math.random() * majorRadii[i]) + 1);
+        
+        // if math.random() == 1
+        // multiply xcoord by 1
         // Else
         // Multiply xCoord by -1
         xCoord *= Math.floor((Math.random() * 2)) == 1 ? 1 : -1;
+
+        // Returns either 1 or 0
+        isNegative = Math.floor((Math.random() * 2)) == 1 ? true : false;
         zCoord = ellipseEq(xCoord, majorRadii[i], isNegative);
 
-        var coordinates = {xCoord, zCoord};
+        coordinates = {xCoord, zCoord};
         initPositions.push(coordinates);
     }
     
@@ -238,65 +251,110 @@ function ellipseEq(xCoord, majorRadius, isNegative) {
     return zCoord;
 }
 
-function updatePositions(positions, majorRadii, meshes) {
+function updatePositions(positions, majorRadii, meshes)
+{
     var coordinates;
+
     // Let innermost planets orbit faster
-    const increment = [4.0, 3.5, 3.0, 2.5, 2.0, 1.5, 1.0, 0.5];
-    //console.log(positions[0]);
+    const increment = [2.00, 1.75, 1.50, 1.25, 1.00, 0.75, 0.50, 0.25];
+
     // Only calculate positions for planets so loop against majorRadii [8]
-    for (let i = 0; i < majorRadii.length; i++) {
+    for (let i = 0; i < majorRadii.length; i++)
+    {
         var remainder;
         var xCoord = positions[i].xCoord;
         var zCoord = positions[i].zCoord;
 
-        if (xCoord > 0) {
-            if (zCoord > 0) {
-                if (increment[i] > (majorRadii[i] - xCoord)) {
-                    remainder = increment[i] - (majorRadii[i] - xCoord);
-                    xCoord += (majorRadii[i] - xCoord);
+        var relative_increment = relativeIncrement(majorRadii[i], xCoord, increment[i]);
+        
+        if (xCoord > 0)
+        {
+            if (zCoord > 0)
+            {
+                // Don't increment past major radius
+                if (relative_increment > (majorRadii[i] - xCoord))
+                {
+                    remainder = majorRadii[i] - xCoord;
+                    xCoord += remainder;
+                    remainder = relative_increment - remainder;
                     xCoord -= remainder;
                     zCoord = ellipseEq(xCoord, majorRadii[i], true);
                 }
-                else {
-                    // x++, z--
-                    xCoord += increment[i];
+
+                else
+                {
+                    xCoord += relative_increment;
                     zCoord = ellipseEq(xCoord, majorRadii[i], false);
                 }
             }
-            else if (zCoord < 0) {
-                xCoord -= increment[i];
+
+            else if (zCoord == 0)
+            {
+                xCoord -= relative_increment;
                 zCoord = ellipseEq(xCoord, majorRadii[i], true);
             }
-        }
-        else if (xCoord < 0) {
-            if (zCoord < 0) {
-                if (increment[i] > majorRadii[i] + xCoord) {
-                    remainder = increment[i] - (majorRadii[i] + xCoord);
-                    xCoord -= majorRadii[i] + xCoord;
-                    xCoord += remainder
-                    zCoord = ellipseEq(xCoord, majorRadii[i], false);
-                }
-                else {
-                    xCoord -= increment[i];
-                    zCoord = ellipseEq(xCoord, majorRadii[i], true);
-                }
-            }
-            else if (zCoord > 0) {
-                xCoord += increment[i];
-                zCoord = ellipseEq(xCoord, majorRadii[i], false); 
-            }
-        }
-        else if (xCoord == 0) {
-            if (zCoord > 0) {
-                xCoord += increment[i];
-                zCoord = ellipseEq(xCoord, majorRadii[i], false); 
-            }
-            else if (zCoord < 0) {
-                xCoord -= increment[i];
+
+            else if (zCoord < 0)
+            {
+                xCoord -= relative_increment;
                 zCoord = ellipseEq(xCoord, majorRadii[i], true);
             }
         }
 
+        else if (xCoord == 0)
+        {
+            if (zCoord > 0)
+            {
+                xCoord += relative_increment;
+                zCoord = ellipseEq(xCoord, majorRadii[i], false);
+            }
+
+            else if (zCoord < 0)
+            {
+                xCoord -= relative_increment;
+                zCoord = ellipseEq(xCoord, majorRadii[i], true);
+            }
+        }
+
+        else if (xCoord < 0)
+        {
+            if (zCoord > 0)
+            {
+                xCoord += relative_increment;
+                zCoord = ellipseEq(xCoord, majorRadii[i], false);
+            }
+
+            else if (zCoord == 0)
+            {
+                xCoord += relative_increment;
+                zCoord = ellipseEq(xCoord, majorRadii[i], false);
+            }
+
+            else if (zCoord < 0)
+            {
+                // Don't increment past major radius
+                if (relative_increment > (majorRadii[i] - Math.abs(xCoord)))
+                {
+                    remainder = majorRadii[i] - Math.abs(xCoord);
+                    xCoord -= remainder;
+                    remainder = relative_increment - remainder;
+                    xCoord += remainder;
+                    zCoord = ellipseEq(xCoord, majorRadii[i], false);
+                }
+
+                else
+                {
+                    xCoord -= relative_increment;
+                    zCoord = ellipseEq(xCoord, majorRadii[i], true);
+                }
+            }
+        }
+        /*
+        if (i == 0)
+        {
+            console.log({xCoord, zCoord});
+        }                
+        */
         coordinates = {xCoord, zCoord};
         positions[i] = coordinates;
     }
@@ -307,29 +365,59 @@ function updatePositions(positions, majorRadii, meshes) {
     }
 }
 
-function makeButtons(bodies) {
+// Increase absolute value of x more gradually at extremities
+function relativeIncrement(major_radius, x_coord, increment)
+{
+    var relative_increment;
+    x_coord = Math.abs(x_coord);
+/*
+    // Limit smallest increment to 0.1
+    if (major_radius - x_coord <= x_coord / major_radius + 1)
+    {
+        relative_increment = (major_radius - x_coord) / major_radius;
+        return relative_increment;
+    }
+*/
+    if (x_coord + 0.1 >= major_radius)
+    {
+        relative_increment = 0.01;
+        relative_increment = relative_increment + increment;
+        return relative_increment
+    }
+
+    else
+    {
+        relative_increment = (major_radius - x_coord) / major_radius;
+        relative_increment = relative_increment + increment;
+        return relative_increment;
+    }
+}
+
+function makeButtons(bodies, meshes) {
     var button;
-    var container = document.getElementById("starButtons");
+    var container = document.getElementById("buttons");
     var name;
+    var name_formatted;
     
     // Sun button
+    /*
     name = bodies[0].englishName;
+    name_formatted = meshes[0].name_formatted;
     button = document.createElement("button");
     button.type = "button";
     button.id = name;
-    button.innerHTML = name;
+    button.innerHTML = name_formatted;
     button.onclick = function() {showTable(bodies[0])};
     container.appendChild(button);
+    */
 
-    container = document.getElementById("planetButtons");
-
-    // Do not include Sun
-    for (let i = 1; i < bodies.length; i++) {
+    for (let i = 0; i < bodies.length; i++) {
         name = bodies[i].englishName;
+        name_formatted = meshes[i].name_formatted;
         button = document.createElement("button");
         button.type = "button";
         button.id = name;
-        button.innerHTML = name;
+        button.innerHTML = name_formatted;
         button.onclick = function() {showTable(bodies[i])};
         container.appendChild(button);
     }
@@ -517,4 +605,5 @@ function drawAxes(scene) {
     var geom2 = new THREE.BufferGeometry().setFromPoints(points2);
     var line2 = new THREE.Line(geom2, mate2);
     scene.add(line2);
+
 }
