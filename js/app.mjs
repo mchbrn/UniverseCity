@@ -1,14 +1,16 @@
 import * as THREE from 'https://unpkg.com/three@0.124.0/build/three.module.js';
-import { OrbitControls } from 'https://unpkg.com/three@0.124.0/examples/jsm/controls/OrbitControls.js';
+import {OrbitControls} from 'https://unpkg.com/three@0.124.0/examples/jsm/controls/OrbitControls.js';
 
 import {Sun, Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune} from './material.mjs';
 
 const materials = new Array();
 materials.push(Sun.mesh, Mercury.mesh, Venus.mesh, Earth.mesh, Mars.mesh, Jupiter.mesh, Saturn.mesh, Uranus.mesh, Neptune.mesh);
 
-function getData(callback) {
+function getData(callback)
+{
     // Get solar data
-    $.getJSON("https://api.le-systeme-solaire.net/rest/bodies/", "filter[]=englishName,eq,Sun", function(data) {
+    $.getJSON("https://api.le-systeme-solaire.net/rest/bodies/", "filter[]=englishName,eq,Sun", function(data)
+    {
         // Correct order of bodies
         var index = [0, 5, 8, 7, 4, 3, 6, 1, 2]
         var unsorted_bodies = new Array();
@@ -31,7 +33,8 @@ function getData(callback) {
         unsorted_bodies.push(sun);
         
         // Get planetary data
-        $.getJSON("https://api.le-systeme-solaire.net/rest/bodies/", "filter[]=isPlanet,neq,false", function(data) {
+        $.getJSON("https://api.le-systeme-solaire.net/rest/bodies/", "filter[]=isPlanet,neq,false", function(data)
+        {
             // Remove the residual error data
             data.bodies.splice(0, 1);
             data.bodies.splice(0, 1);
@@ -39,21 +42,26 @@ function getData(callback) {
             data.bodies.splice(2, 1);
             data.bodies.splice(2, 1);
             
-            for (let i = 0; i < data.bodies.length; i++) {
+            for (let i = 0; i < data.bodies.length; i++)
+            {
                 var body = data.bodies[i];
                 var key = Object.keys(body);
 
-                for (let property of key) {
+                for (let property of key)
+                {
                     // Remove empty properties
-                    if (body[property] == "" || body[property] == null) {
+                    if (body[property] == "" || body[property] == null)
+                    {
                         delete body[property];
                     }
                     // Remove unwanted properties
-                    else if (property == "id" || property == "isPlanet" || property == "name" || property == "rel") {
+                    else if (property == "id" || property == "isPlanet" || property == "name" || property == "rel")
+                    {
                         delete body[property];
                     }
                     // Replace moon objects with number of moons
-                    else if (property == "moons") {
+                    else if (property == "moons")
+                    {
                         body[property] = body[property].length
                     }
                 }
@@ -69,17 +77,24 @@ function getData(callback) {
     });
 }
 
-function initialiseScene(bodies) {
+function initialiseScene(bodies)
+{
     // Create scene
     const scene = new THREE.Scene();
 
     // Create Orthographic camera
     const camera = new THREE.OrthographicCamera(window.innerWidth / -2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2, -10000, 10000);
-    scene.add(camera);
 
     camera.position.x = 0;
-    camera.position.y = 0;
-    camera.position.z = 375;
+    camera.position.y = 350;
+    camera.position.z = 350;
+
+    camera.rotation.x = -0.15;
+
+    camera.zoom = 0.4;
+
+    scene.add(camera);
+    console.log(camera);
 
     // Create renderer
     const renderer = new THREE.WebGLRenderer({antialias:true});
@@ -97,9 +112,9 @@ function initialiseScene(bodies) {
     var meshes = modelBodies(bodies);
     var positions = setInitPositions(meshes);
 
-    for (let i = 0; i < meshes.length; i++) {
+    for (let i = 0; i < meshes.length; i++)
+    {
         scene.add(meshes[i]);
-        //meshes[i].position.set(positions[i].xCoord, 0, positions[i].zCoord);
     }
 
     // Set Sun's position individually
@@ -108,30 +123,35 @@ function initialiseScene(bodies) {
     
     var majorRadii = getMajorRadii(meshes);
 
-    function animate() {
+    function animate()
+    {
         updatePositions(positions, majorRadii, meshes);
         requestAnimationFrame(animate);
         renderer.render(scene, camera);
     }
     
-    //animate();
+    animate();
 
     makeButtons(bodies, meshes);
 }
 
-function getDataCallback(bodies) {
+function getDataCallback(bodies)
+{
     initialiseScene(bodies);
 }
 
 getData(getDataCallback);
 
-function modelBodies(bodies) {
+function modelBodies(bodies)
+{
     var meshes = new Array();
     var radius;
     var name_formatted;
     
-    for (let i = 0; i < bodies.length; i++) {
-        switch(bodies[i].englishName) {
+    for (let i = 0; i < bodies.length; i++)
+    {
+        switch(bodies[i].englishName)
+        {
             case "Sun":
                 radius = 160.0;
                 name_formatted = "sun";
@@ -181,19 +201,22 @@ function modelBodies(bodies) {
     return meshes;
 }
 
-function setInitPositions(meshes) {
+function setInitPositions(meshes)
+{
     var majorRadii = new Array();
     majorRadii = getMajorRadii(meshes);
     var initPositions = getInitPositions(majorRadii);
     return initPositions;
 }
 
-function getMajorRadii(meshes) {
+function getMajorRadii(meshes)
+{
     var majorRadii = new Array();
     var majorRadius = 0; 
     
     // Do not include Sun
-    for (let i = 1; i < meshes.length; i++) {
+    for (let i = 1; i < meshes.length; i++)
+    {
         // Space planets by diameter of previous neighbour plus 200
         majorRadius += (meshes[i - 1].geometry.parameters.radius * 2) + 200
         meshes[i].position.set(majorRadius, 0, 0);
@@ -203,12 +226,14 @@ function getMajorRadii(meshes) {
     return majorRadii;
 }
 
-function getInitPositions(majorRadii) {
+function getInitPositions(majorRadii)
+{
     var initPositions = new Array();
     var coordinates;
 
     // Only get positions for planets so loop against majorRadii [8]
-    for (let i = 0; i < majorRadii.length; i++) {
+    for (let i = 0; i < majorRadii.length; i++)
+    {
         var isNegative;
         var xCoord;
         var zCoord;
@@ -234,7 +259,8 @@ function getInitPositions(majorRadii) {
     return initPositions;
 }
 
-function ellipseEq(xCoord, majorRadius, isNegative) {
+function ellipseEq(xCoord, majorRadius, isNegative)
+{
     var zCoord;
     var minorRadius;
 
@@ -246,18 +272,21 @@ function ellipseEq(xCoord, majorRadius, isNegative) {
 
     // Full equation involves square root
     // Prepare for negative values
-    if (equation < 0) {
+    if (equation < 0)
+    {
         equation *= -1;
         // z = sqrt(b^2(1 - (x^2)/(a^2)))
         zCoord = Math.sqrt(equation);
         zCoord *= -1;
     }
-    else {
+    else
+    {
         // z = sqrt(b^2(1 - (x^2)/(a^2)))
         zCoord = Math.sqrt(equation);
     }
 
-    if (isNegative) {
+    if (isNegative)
+    {
         zCoord *= -1;
     }
 
@@ -368,7 +397,8 @@ function updatePositions(positions, majorRadii, meshes)
     }
 
     // Only set positions for planets so loop against majorRadii [8]
-    for (let i = 0; i < majorRadii.length; i++) {
+    for (let i = 0; i < majorRadii.length; i++)
+    {
         meshes[i + 1].position.set(positions[i].xCoord, 0, positions[i].zCoord);
     }
 }
@@ -401,25 +431,15 @@ function relativeIncrement(major_radius, x_coord, increment)
     }
 }
 
-function makeButtons(bodies, meshes) {
+function makeButtons(bodies, meshes)
+{
     var button;
     var container = document.getElementById("buttons");
     var name;
     var name_formatted;
     
-    // Sun button
-    /*
-    name = bodies[0].englishName;
-    name_formatted = meshes[0].name_formatted;
-    button = document.createElement("button");
-    button.type = "button";
-    button.id = name;
-    button.innerHTML = name_formatted;
-    button.onclick = function() {showTable(bodies[0])};
-    container.appendChild(button);
-    */
-
-    for (let i = 0; i < bodies.length; i++) {
+    for (let i = 0; i < bodies.length; i++)
+    {
         name = bodies[i].englishName;
         name_formatted = meshes[i].name_formatted;
         button = document.createElement("button");
@@ -431,7 +451,8 @@ function makeButtons(bodies, meshes) {
     }
 }
 
-function showTable(body) {
+function showTable(body)
+{
     var propertyName;
     var propertyValue;
     var propertyExponent;
@@ -444,8 +465,10 @@ function showTable(body) {
     // Clear previous table
     table.innerHTML = "";   
 
-    for (let property of keys) {
-        switch(property) {
+    for (let property of keys)
+    {
+        switch(property)
+        {
             case "englishName":
                 propertyName = "Name";
                 propertyValue = body.englishName;
@@ -575,7 +598,8 @@ function showTable(body) {
         th.appendChild(key);
         row.appendChild(th);
         
-        if (typeof body[property] === "object") {
+        if (typeof body[property] === "object")
+        {
             var td = document.createElement("td");
             var sup = document.createElement("sup");
             var exp = document.createTextNode(propertyExponent);
@@ -587,7 +611,8 @@ function showTable(body) {
             td.appendChild(sup);
             td.appendChild(unit);
         }
-        else if (property == "inclination" || property == "axialTilt") {
+        else if (property == "inclination" || property == "axialTilt")
+        {
             var td = document.createElement("td");
             var degrees = document.createElement("span");
             var value = document.createTextNode(propertyValue);
@@ -597,7 +622,8 @@ function showTable(body) {
             td.appendChild(value);
             td.appendChild(degrees);
         }
-        else {
+        else
+        {
             var td = document.createElement("td");
             var value = document.createTextNode(propertyValue);
             var unit = document.createTextNode(units);
@@ -607,24 +633,4 @@ function showTable(body) {
         
         row.appendChild(td);
     }
-}
-
-function drawAxes(scene) {
-
-    var mate1 = new THREE.LineBasicMaterial({color:0xffffff});
-    var points1 = [];
-    points1.push(new THREE.Vector3(-1000,0,0)); 
-    points1.push(new THREE.Vector3(1000,0,0));
-    var geom1 = new THREE.BufferGeometry().setFromPoints(points1);
-    var line1 = new THREE.Line(geom1, mate1);
-    scene.add(line1);
-
-    var mate2 = new THREE.LineBasicMaterial({color:0x00ff00});
-    var points2 = [];
-    points2.push(new THREE.Vector3(0,0,-1000)); 
-    points2.push(new THREE.Vector3(0,0,1000));
-    var geom2 = new THREE.BufferGeometry().setFromPoints(points2);
-    var line2 = new THREE.Line(geom2, mate2);
-    scene.add(line2);
-
 }

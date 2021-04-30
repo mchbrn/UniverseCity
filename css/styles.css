@@ -32,7 +32,7 @@ th {
 }
 
 #menu {
-    overflow-x: hidden;
+    overflow-x: auto;
     overflow-y: auto;
     position: absolute;
     margin-top: 1vh;
